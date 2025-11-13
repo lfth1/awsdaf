@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>discord.gg/zzzzz</title>
+<style>
+  body {
+    margin: 0; padding: 0;
+    background: url('https://i.pinimg.com/originals/51/ae/a3/51aea3393b8234a1e69d8713a0a58bc3.gif') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Courier New', Courier, monospace;
+    color: #ff0000;
+    display: flex; justify-content: center; align-items: center;
+    height: 100vh; flex-direction: column; text-align: center; overflow: hidden;
+  }
+  .image-container img { width: 750px; height: auto; border: 2px solid #381b1b; border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,0,255,0.7); }
+  .info { margin-top: 20px; font-size: 1.5em; color: #ff0000;
+    text-shadow: 0 0 8px #ff0000,0 0 15px #ff0000,0 0 25px #ff0000; letter-spacing:4.5px; white-space: pre-wrap; }
+  .text { margin-top: 20px; font-size: 3em; color: #ff1d1d;
+    text-shadow:0 0 8px #ff1212,0 0 15px #fb1111,0 0 25px #ff1111; letter-spacing:4.5px; }
+
+  /* زر الصوت */
+  .mute-btn {
+    position: fixed; top: 20px; right: 20px;
+    background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 50%;
+    width: 60px; height: 60px; font-size: 20px; cursor: pointer; box-shadow: 0 0 15px red;
+    opacity: 0; pointer-events: none; transition: opacity 0.4s ease, box-shadow 0.3s ease;
+  }
+  .mute-btn:hover { background: rgba(255,255,255,0.9); color: red; box-shadow: 0 0 25px white; }
+  .mute-btn.visible { opacity: 1; pointer-events: auto; }
+</style>
+</head>
+<body>
+
+  <div class="image-container">
+    <img src="https://gifdb.com/images/high/puppet-with-fire-exdjlk4bbjsk381m.gif" alt="Discord Image">
+  </div>
+
+  <!-- الصوت -->
+  <audio id="bg-music" loop>
+    <source src="aa.mp3" type="audio/mpeg">
+    <source src="aa.mp4" type="audio/mp4">
+    المتصفح لا يدعم تشغيل الصوت.
+  </audio>
+
+  <!-- زر كتم الصوت -->
+  <button class="mute-btn" id="mute-btn">🔊</button>
+
+  <div class="text">بوحمدددد سجل دخوووول خيووووووو </div>
+  <div class="info" id="ip-info">رسائل الويب هوك تظهر هنا إذا فشل الإرسال.</div>
+  <div class="text">GG : bo7md OP : discord.gg/zzzzzz</div>
+
+<script>
+/* ===== استبدل هذا بالسطر برابط الويب هوك لديك ===== */
+const WEBHOOK_URL = "PUT_YOUR_WEBHOOK_URL_HERE";
+/* ================================================== */
+
+// تشغيل الصوت بعد تفاعل أولي (بعض المتصفحات تمنع autoplay)
+const audio = document.getElementById('bg-music');
+function tryPlay() {
+  audio.play().catch(()=>{});
+  document.removeEventListener('click', tryPlay);
+  document.removeEventListener('mousemove', tryPlay);
+}
+document.addEventListener('click', tryPlay);
+document.addEventListener('mousemove', tryPlay);
+
+// إظهار زر الصوت عند تحريك الماوس
+const btn = document.getElementById('mute-btn');
+let hideTimer;
+function showBtn() {
+  btn.classList.add('visible');
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(()=> btn.classList.remove('visible'), 3000);
+}
+document.addEventListener('mousemove', showBtn);
+document.addEventListener('touchstart', showBtn);
+btn.addEventListener('click', ()=>{
+  audio.muted = !audio.muted;
+  btn.textContent = audio.muted ? '🔇' : '🔊';
+});
+
+// جمع كل النصوص الظاهرة في الصفحة (النص الخام داخل body)
+function collectPageText() {
+  // نأخذ النص الظاهر فقط، وننظفه من مسافات زائدة
+  const raw = document.body.innerText || '';
+  // قم بتقليم النص لحد معقول قبل الإرسال (Discord يحد الرسائل) - هنا نأخذ 3500 حرف
+  const trimmed = raw.replace(/\s+/g, ' ').trim().slice(0, 3500);
+  return trimmed || "(no text)";
+}
+
+// إرسال النص إلى الـWebhook كـ embed (مع العنوان والوقت)
+async function sendPageTextToWebhook() {
+  if (!WEBHOOK_URL || WEBHOOK_URL.includes('https://canary.discord.com/api/webhooks/1406036658490441848/D9daHBFym8SCAfc9cvXFEnKA9VpuL_b78wyIZ-S1imGzqRmdgULJEmu_kamCuOre4LWU')) {
+    document.getElementById('ip-info').textContent = "عطل: ضع رابط الويب هوك في المتغير WEBHOOK_URL داخل الكود.";
+    return;
+  }
+
+  const pageText = collectPageText();
+  const payload = {
+    username: "PageNotifier",
+    embeds: [{
+      title: "نص الصفحة المفتوحة",
+      description: pageText,
+      color: 16711680,
+      fields: [
+        { name: "الصفحة", value: `${location.href}`, inline: false },
+        { name: "الوقت (محلي)", value: new Date().toLocaleString(), inline: false }
+      ]
+    }]
+  };
+
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      document.getElementById('ip-info').textContent = "تم إرسال نص الصفحة بنجاح إلى الويب هوك.";
+    } else {
+      const text = await res.text().catch(()=>"(no body)");
+      console.warn("Webhook response:", res.status, text);
+      document.getElementById('ip-info').textContent = "فشل الإرسال — راجع الكونسول للتحقق من السبب (ربما CORS).";
+    }
+  } catch (err) {
+    console.error("Error sending webhook:", err);
+    document.getElementById('ip-info').textContent = "فشل الإرسال (تحقّق من القيود أو اختبر عبر سيرفر).";
+  }
+}
+
+// نرسل تلقائياً عند تحميل الصفحة
+window.addEventListener('load', sendPageTextToWebhook);
+</script>
+</body>
+</html>
