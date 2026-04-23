@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Al-Mutairi</title>
+    
+    <link rel="icon" type="image/png" href="https://i.pinimg.com/736x/f2/70/7d/f2707d546ef9eb5eab458841ed088b82.jpg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@900&family=Tajawal:wght@400;700&family=Share+Tech+Mono&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none !important; -webkit-user-select: none; user-select: none; }
+        
+        body { 
+            background-color: #000; color: #fff; height: 100vh; width: 100vw; 
+            overflow: hidden; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; perspective: 1000px;
+        }
+
+        #entry-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; display: flex; justify-content: center; 
+            align-items: center; z-index: 10000; cursor: pointer !important; 
+            transition: opacity 0.8s ease; 
+        }
+
+        .video-background { 
+            position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; 
+            z-index: -100; object-fit: cover; filter: brightness(0.4); pointer-events: none;
+        }
+
+        .video-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.2); backdrop-filter: blur(4px); 
+            z-index: -99; pointer-events: none; 
+        }
+
+        /* --- مشغل MP3 --- */
+        .mp3-player-chassis {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 240px; background: linear-gradient(145deg, #151515, #050505);
+            border: 2px solid #222; border-radius: 20px;
+            padding: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.9);
+            z-index: 1000; font-family: 'Share Tech Mono', monospace;
+            will-change: transform;
+        }
+
+        .mp3-lcd {
+            background: #080c08; border: 1px solid #1a241a;
+            border-radius: 8px; padding: 10px; margin-bottom: 12px;
+        }
+
+        .lcd-title { color: #046b11; font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px; overflow: hidden; white-space: nowrap; }
+        .lcd-track { color: #fff; font-size: 0.75rem; margin-bottom: 8px; opacity: 0.9; }
+        .mp3-bar-bg { width: 100%; height: 4px; background: #111; border-radius: 2px; position: relative; overflow: hidden; }
+        .mp3-bar-fill { width: 0%; height: 100%; background: #046b11; box-shadow: 0 0 8px #046b11; transition: width 0.1s linear; }
+        .mp3-time-row { display: flex; justify-content: space-between; font-size: 0.6rem; color: #046b11; margin-top: 5px; }
+        
+        .mp3-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px; }
+        .mp3-circle-btn {
+            width: 34px; height: 34px; background: #111; border: 1px solid #222;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: #7c7c7c; font-size: 0.7rem; cursor: pointer !important; pointer-events: auto !important;
+            transition: transform 0.2s;
+        }
+        .btn-main { width: 42px; height: 42px; color: #fff; font-size: 1rem; border-color: #333; }
+        .mp3-vol-slider { -webkit-appearance: none; width: 100%; height: 3px; background: #222; border-radius: 5px; outline: none; pointer-events: auto !important; }
+        .mp3-vol-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: #046b11; border-radius: 50%; }
+
+        /* العداد والعين */
+        .stats-wrapper { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 15px 0; }
+        .mini-eye-container {
+            position: relative; width: 45px; height: 26px; background: #fff; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .mini-eye-iris { 
+            position: absolute; width: 16px; height: 16px; 
+            background: radial-gradient(circle, #333 0%, #111 40%, #000 70%); 
+            border-radius: 50%; will-change: transform;
+        }
+        .mini-eye-pupil { width: 7px; height: 7px; background: #000; border-radius: 50%; }
+        .v-num { font-family: 'Share Tech Mono'; font-size: 1.4rem; color: #fff; letter-spacing: 1px; }
+
+        .boss-container { 
+            text-align: center; z-index: 100; transition: transform 0.1s ease-out; 
+            will-change: transform; backface-visibility: hidden;
+        }
+        
+        .full-name { font-family: 'Cinzel'; font-size: clamp(2.5rem, 8vw, 5rem); letter-spacing: 8px; background: linear-gradient(180deg, #fff, #444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .gif-wrapper { width: 20vh; height: 20vh; pointer-events: none; mix-blend-mode: screen; }
+        .gif-wrapper img { width: 100%; height: 100%; object-fit: contain; transition: opacity 0.5s ease; will-change: opacity; }
+        
+        .badges-container { display: flex; gap: 10px; margin: 10px 0; justify-content: center; }
+        .badge { font-family: 'Tajawal'; font-size: 0.75rem; background: rgba(10, 10, 10, 0.7); padding: 5px 12px; border-radius: 50px; border: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; gap: 6px; }
+        
+        .social-links { display: flex; gap: 25px; margin-top: 15px; justify-content: center; }
+        .social-icon { font-size: 2rem; pointer-events: auto !important; color: #7c7c7c; transition: 0.3s; }
+
+        #cursor { 
+            position: fixed; width: 8px; height: 8px; pointer-events: none; 
+            z-index: 20000; background: #fff; border-radius: 50%; 
+            box-shadow: 0 0 10px #fff; transform: translate(-50%, -50%); 
+            will-change: left, top;
+        }
+
+        #confession-text { margin-top:15px; font-family:'Tajawal'; font-size:0.8rem; color:#555; height:20px; transition: opacity 0.5s ease; }
+    </style>
+</head>
+<body oncontextmenu="return false;"> 
+
+    <div id="entry-overlay" onclick="startSite()"><span>"Hello World"</span></div>
+    <div id="cursor"></div>
+    
+    <video id="bg-video" loop playsinline muted preload="auto" class="video-background">
+        <source src="background.mp4" type="video/mp4">
+    </video>
+    
+    <div class="video-overlay"></div>
+    <audio id="main-audio" src="nmnm.mp3" preload="auto"></audio>
+
+    <div class="mp3-player-chassis">
+        <div class="mp3-lcd">
+            <div class="lcd-title" id="mp3-status">READY TO PLAY</div>
+            <div class="lcd-track">Phantom</div>
+            <div class="mp3-bar-bg"><div class="mp3-bar-fill" id="p-fill"></div></div>
+            <div class="mp3-time-row"><span id="cur-time">0:00</span><span id="dur-time">0:00</span></div>
+        </div>
+        <div class="mp3-controls">
+            <div class="mp3-circle-btn"><i class="fas fa-backward"></i></div>
+            <div class="mp3-circle-btn btn-main" id="play-pause-btn"><i class="fas fa-play" id="play-icon"></i></div>
+            <div class="mp3-circle-btn"><i class="fas fa-forward"></i></div>
+        </div>
+        <div class="mp3-vol-box">
+            <input type="range" class="mp3-vol-slider" id="v-range" min="0" max="1" step="0.01" value="0.5">
+        </div>
+    </div>
+
+    <div class="gif-wrapper">
+        <img id="dynamic-gif" src="https://c-p.rmcdn.net/55c4887f2541c97e1b608fee/1428831/upload-88ece8ab-90f3-436c-9c48-a76abb4d97fb.gif">
+    </div>
+
+    <div class="boss-container">
+        <h1 class="full-name">Al-Mutairi</h1>
+        <div class="stats-wrapper">
+            <div class="mini-eye-container"><div class="mini-eye-iris" id="guns-eye"><div class="mini-eye-pupil"></div></div></div>
+            <span class="v-num" id="visit-num">2,500</span>
+        </div>
+        <div class="badges-container">
+            <div class="badge"><i class="fas fa-code" style="color:#046b11"></i><span>developer</span></div>
+            <div class="badge"><i class="fas fa-crown" style="color:#ffcc00"></i><span>e5tm</span></div>
+        </div>
+        <div class="social-links">
+            <a href="https://tiktok.com/@e5tm" class="social-icon"><i class="fab fa-tiktok"></i></a>
+            <a href="https://discord.gg/" class="social-icon"><i class="fab fa-discord"></i></a>
+        </div>
+        <div id="confession-text">Come on Gunslol for Faggots...</div>
+    </div>
+
+    <script>
+        const audio = document.getElementById('main-audio');
+        const video = document.getElementById('bg-video');
+        const playBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const mp3Status = document.getElementById('mp3-status');
+        const iris = document.getElementById('guns-eye');
+        const cursor = document.getElementById('cursor');
+        const bossContainer = document.querySelector('.boss-container');
+
+        // قائمة الـ GIFs الجديدة (تم إضافة 8 روابط إضافية فخمة)
+        const gifs = [
+            "https://c-p.rmcdn.net/55c4887f2541c97e1b608fee/1428831/upload-88ece8ab-90f3-436c-9c48-a76abb4d97fb.gif",
+            "https://c-p.rmcdn.net/55c4887f2541c97e1b608fee/1428831/upload-df45aa60-2ea8-4f47-9c1f-cf288febf487.gif",
+            "https://cdn.discordapp.com/attachments/1486203655819628617/1495201406213165136/upload-3fa7966b-3b6b-4719-befa-146e64854637.gif?ex=69e56252&is=69e410d2&hm=ab885a14dee94a498265edeb7847ea8f89e930137a8d3d327a5a8e14fb40cab4&",
+            "https://cdn.discordapp.com/attachments/1486203655819628617/1495201406930649169/upload-5fd490a7-0617-4ac9-ace0-a3c9b22f60bc.gif?ex=69e56252&is=69e410d2&hm=9065bc9eafce6a43c37c76690b3acc51af50b0f4eb476b9355ae2de45016bc35&",
+            "https://cdn.discordapp.com/attachments/1486203655819628617/1495201407542890546/upload-45c8e26e-bd51-4075-8430-b3c43a9c030e.gif?ex=69e56253&is=69e410d3&hm=303c5bf5bd4ce04245feef76bac5c7d242bae04b5f8afa566a3244e9f655ae8f&",
+            "https://cdn.discordapp.com/attachments/1486203655819628617/1495201408109252710/upload-2538db70-c650-4bc6-a7ca-5c81cc7d9451.gif?ex=69e56253&is=69e410d3&hm=ec7d86005c818f3d07987691e7b98b7d90cb2c3832ef1c924dce74850ac86c2b&",
+            "https://media.discordapp.net/attachments/1486203655819628617/1495201408805241046/upload-9623e652-98c2-4025-ae8e-7ab1ec9a04e9.gif?ex=69e56253&is=69e410d3&hm=3b6ab63f49ccb2de73354a8b9a35f9c16f145476fb8db3d0ee14997ea2f0fd01&=&width=879&height=813",
+            "https://cdn.discordapp.com/attachments/1486203655819628617/1495201409593905312/upload-14850742-bba8-49e9-92f0-0af1f969d2ad.gif?ex=69e56253&is=69e410d3&hm=c3f6efb382f1aec35c5898dac04d8da64d6a68f02ff943acafee2e079e4c08cf&",
+            "https://cdn.discordapp.com/attachments/1486203655819628617/1495201410352943154/upload-b8e188ee-e7b9-44b5-a25a-9e374cb96cee.gif?ex=69e56253&is=69e410d3&hm=e2aa7f6af212a020f9909c067a1144ceb6b59179617c177d876a24b90a332b6e&",
+            "https://cdn.discordapp.com/attachments/1486203655819628617/1495201410986541056/upload-ca4ccd25-ed46-4db8-a9c8-c0b0031ccbb6.gif?ex=69e56253&is=69e410d3&hm=991443325864a5d1ffda1ab6c93c3fc5852c20330241d6ddabca1255dd599a5a&"
+        ];
+
+        function startSite() {
+            video.play(); audio.play().catch(()=>{});
+            playIcon.classList.replace('fa-play', 'fa-pause');
+            mp3Status.innerText = "NOW PLAYING";
+            document.getElementById('entry-overlay').style.opacity = '0';
+            setTimeout(() => { document.getElementById('entry-overlay').style.display = 'none'; }, 800);
+            
+            let v = parseInt(localStorage.getItem('dr_v_2500') || 2500);
+            if(!sessionStorage.getItem('v_done')) { v += 1; localStorage.setItem('dr_v_2500', v); sessionStorage.setItem('v_done', 't'); }
+            document.getElementById('visit-num').innerText = v.toLocaleString();
+        }
+
+        playBtn.addEventListener('click', () => {
+            if (audio.paused) { audio.play(); playIcon.classList.replace('fa-play', 'fa-pause'); mp3Status.innerText = "NOW PLAYING"; }
+            else { audio.pause(); playIcon.classList.replace('fa-pause', 'fa-play'); mp3Status.innerText = "PAUSED"; }
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            if (!isNaN(audio.duration)) {
+                document.getElementById('p-fill').style.width = (audio.currentTime / audio.duration) * 100 + '%';
+                let cM = Math.floor(audio.currentTime / 60), cS = Math.floor(audio.currentTime % 60);
+                document.getElementById('cur-time').innerText = `${cM}:${cS < 10 ? '0'+cS : cS}`;
+                let dM = Math.floor(audio.duration/60), dS = Math.floor(audio.duration%60);
+                document.getElementById('dur-time').innerText = `${dM}:${dS < 10 ? '0'+dS : dS}`;
+            }
+        });
+
+        document.getElementById('v-range').addEventListener('input', (e) => { audio.volume = e.target.value; });
+
+        document.addEventListener('mousemove', (e) => {
+            const xRel = (e.clientX / window.innerWidth - 0.5);
+            const yRel = (e.clientY / window.innerHeight - 0.5);
+            iris.style.transform = `translate3d(${xRel * 20}px, ${yRel * 12}px, 0)`;
+            bossContainer.style.transform = `rotateX(${-yRel * 10}deg) rotateY(${xRel * 10}deg)`;
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        // تبديل الصور الـ 10 تلقائياً
+        let gI = 0; setInterval(() => {
+            const img = document.getElementById('dynamic-gif');
+            img.style.opacity = '0';
+            setTimeout(() => { 
+                gI = (gI + 1) % gifs.length; 
+                img.src = gifs[gI]; 
+                img.onload = () => { img.style.opacity = '1'; };
+            }, 500);
+        }, 6000);
+
+        const confessions = ["عرفج ولا عرفي؟", "Al-Mutairi Member", "305 Forever", "Phantom Soul"];
+        let cI = 0; setInterval(() => {
+            const el = document.getElementById('confession-text');
+            el.style.opacity = '0';
+            setTimeout(() => { cI = (cI + 1) % confessions.length; el.innerText = confessions[cI]; el.style.opacity = '1'; }, 500);
+        }, 5000);
+
+        document.onkeydown = function(e) { if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73) || (e.ctrlKey && e.keyCode == 85)) return false; };
+    </script>
+</body>
+</html>
